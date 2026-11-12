@@ -1,50 +1,22 @@
-<!doctype html>
-<html lang="tr">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kantin Tycoon 3D</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/style.css">
-</head>
-<body>
-<div id="game"></div>
-<div id="vignette"></div>
-<div id="hud">
-  <div class="topbar">
-    <div class="brand"><span class="brand-mark">K</span><div><b>KANTİN TYCOON</b><small>OKUL KANTİNİ · GÜN 01</small></div></div>
-    <div class="stats">
-      <div class="stat"><small>KASA</small><b id="money">₺1.250</b></div>
-      <div class="stat"><small>GÜNÜN CİROSU</small><b id="revenue">₺0</b></div>
-      <div class="stat"><small>SABIR</small><b id="rep">100%</b></div>
-      <div class="clock"><span class="dot"></span><b id="clock">08:00</b><small>PAZARTESİ</small></div>
-    </div>
-  </div>
-  <div class="crosshair"><i></i><i></i></div>
-  <div id="hint" class="hint hidden"><kbd>E</kbd><span id="hintText">Etkileşim</span></div>
-  <div class="bottom-left">
-    <div class="objective"><span class="objective-icon">✦</span><div><small>GÜNLÜK HEDEF</small><b id="objective">İlk müşterini karşıla</b></div></div>
-    <div class="controls"><span><kbd>W A S D</kbd> HAREKET</span><span><kbd>SHIFT</kbd> KOŞ</span><span><kbd>E</kbd> ETKİLEŞİM</span><span><kbd>ESC</kbd> DURAKLAT</span></div>
-  </div>
-  <div class="right-stack">
-    <div class="task-card"><div class="task-head"><span>İŞLETME DURUMU</span><span class="live">CANLI</span></div><div class="task-row"><span>Bekleyen müşteri</span><b id="queueCount">0</b></div><div class="task-row"><span>Ürün stoğu</span><b id="stockCount">36 adet</b></div><div class="task-row"><span>Memnuniyet</span><b id="satisfaction">92%</b></div><div class="progress"><i id="goalProgress"></i></div><small class="muted" id="goalText">Günlük hedef: ₺500</small></div>
-  </div>
-</div>
-<div id="startScreen" class="screen">
-  <div class="start-card">
-    <div class="eyebrow"><span></span> YENİ BİR İŞLETME HİKÂYESİ</div>
-    <h1>KANTİN<br><em>TYCOON</em><sup>3D</sup></h1>
-    <p>Küçük bir okul kantininden şehrin en sevilen işletmesine. Tezgâhın arkasına geç, müşterilerini tanı ve kendi düzenini kur.</p>
-    <div class="start-features"><span>✦ Birinci şahıs</span><span>✦ İşletme simülasyonu</span><span>✦ Serbest keşif</span></div>
-    <button id="startBtn">KANTİNİ AÇ <span>→</span></button>
-    <small class="start-note">WASD hareket · Fare kamera · E etkileşim · ESC duraklat</small>
-  </div>
-  <div class="start-side"><span>01 / 05</span><b>HER GÜN<br>YENİ BİR<br>BAŞLANGIÇ.</b><small>İŞLETMEYİ SEN YÖNET.</small></div>
-</div>
-<div id="interactionPanel" class="panel hidden">
-  <button class="close" id="closePanel">×</button><div class="panel-kicker">KANTİN İŞLEMLERİ</div><h2 id="panelTitle">Kasa</h2><div id="panelContent"></div>
-</div>
-<div id="toast"></div>
-<div id="pauseScreen" class="screen hidden"><div class="pause-card"><div class="eyebrow">KISA BİR MOLA</div><h2>OYUN DURAKLATILDI</h2><p>Kantin seni bekliyor.</p><button id="resumeBtn">DEVAM ET →</button></div></div>
-<script type="module" src="/game.js"></script>
-</body></html>
+<!DOCTYPE html><html lang="tr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kantin Tycoon</title>
+<style>
+*{box-sizing:border-box}body{margin:0;overflow:hidden;background:#111;font-family:system-ui,sans-serif;color:#fff;user-select:none}
+canvas{display:block;width:100vw;height:100vh}.ov{position:fixed;inset:0;background:rgba(10,12,20,.88);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:9;text-align:center}
+.hide{display:none!important}button,input{font:inherit;padding:10px 18px;border-radius:8px;border:0}button{background:#f5a623;color:#222;font-weight:700;cursor:pointer}input{background:#fff;color:#222}
+#top{position:fixed;top:8px;left:50%;transform:translateX(-50%);display:flex;gap:14px;background:rgba(0,0,0,.55);padding:6px 16px;border-radius:10px;font-weight:600}
+#ords{position:fixed;left:8px;top:8px;width:230px;display:flex;flex-direction:column;gap:5px;max-height:80vh;overflow:hidden}
+.o{background:rgba(0,0,0,.6);border-left:4px solid #f5a623;padding:5px 8px;border-radius:6px;font-size:13px}
+#prompt{position:fixed;left:50%;top:58%;transform:translateX(-50%);background:rgba(0,0,0,.65);padding:6px 14px;border-radius:8px}
+#cross{position:fixed;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;opacity:.8}
+#held{position:fixed;right:12px;bottom:12px;background:rgba(0,0,0,.6);padding:8px 14px;border-radius:8px}
+#msgs{position:fixed;right:10px;top:8px;width:300px;text-align:right;font-size:14px;text-shadow:0 1px 2px #000}
+#inv{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,.8);padding:14px 20px;border-radius:10px;columns:2;gap:24px}
+</style></head><body>
+<div id="c"></div>
+<div id="lobby" class="ov"><h1>🍔 KANTİN TYCOON</h1><input id="nm" placeholder="Adın" maxlength="12"><button id="cr">Oda Kur</button>
+<label style="font-size:14px"><input type="checkbox" id="ld"> Kayıtlı oyunu yükle</label><div><input id="cd" placeholder="Oda kodu" maxlength="4" style="width:110px;text-transform:uppercase"> <button id="jn">Katıl</button></div><div id="err" style="color:#f77"></div>
+<small>WASD • Shift koş • E / sol tık etkileşim • sağ tık alternatif • Tab stok • ESC menü</small></div>
+<div id="menu" class="ov hide"><h2>Menü</h2><div id="mcode"></div><button id="resume">Oyuna Dön</button></div>
+<div id="report" class="ov hide"></div>
+<div id="hud" class="hide"><div id="top"></div><div id="ords"></div><div id="cross"></div><div id="prompt" class="hide"></div><div id="held"></div><div id="msgs"></div><div id="inv" class="hide"></div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script><script src="game.js"></script></body></html>
