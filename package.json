@@ -1,7 +1,7 @@
 {
-  "name": "kantin-simulator",
+  "name": "kantin-3d",
   "version": "1.0.0",
-  "description": "Okul Kantini Multiplayer Simulator - Max 4 oyuncu",
+  "description": "Basit 3D Multiplayer Kantin Simulator",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"

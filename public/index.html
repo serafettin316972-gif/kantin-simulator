@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kantin 3D - Multiplayer</title>
+  <link rel="stylesheet" href="/css/style.css" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+</head>
+<body>
+  <!-- Lobby -->
+  <div id="lobby" class="overlay active">
+    <div class="card">
+      <h1>🏫 Kantin 3D</h1>
+      <p class="sub">Basit Multiplayer 3D Kantin</p>
+      <input type="text" id="playerName" placeholder="İsmin" maxlength="12" />
+      <button id="btnCreate" class="btn primary">Oda Oluştur</button>
+      <div class="or">veya</div>
+      <div class="join">
+        <input type="text" id="roomCode" placeholder="Oda Kodu" maxlength="4" />
+        <button id="btnJoin" class="btn">Katıl</button>
+      </div>
+      <div id="error" class="error"></div>
+      <div id="lobbyInfo" class="lobby-info hidden">
+        <p>Oda Kodu: <strong id="codeDisplay"></strong></p>
+        <ul id="playerList"></ul>
+        <button id="btnStart" class="btn success hidden">Oyunu Başlat</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="crosshair">+</div>
+    <div id="info">
+      <div>WASD - Hareket | Mouse - Bakış | E - Etkileşim | ESC - Mouse serbest</div>
+    </div>
+    <div id="playersHud"></div>
+    <div id="toast"></div>
+  </div>
+
+  <!-- Canvas will be added by Three.js -->
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/game.js"></script>
+</body>
+</html>
