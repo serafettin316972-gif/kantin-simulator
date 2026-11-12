@@ -1,9 +1,9 @@
 const $=id=>document.getElementById(id);
-const NAMES={bread:'Tost ekmeği',cheese:'Kaşar',sucuk:'Sucuk',patty:'Köfte',bun:'Hamburger ekmeği',potato:'Patates',lettuce:'Marul',tomato:'Domates',tea:'Çay',cola:'Kola',ayran:'Ayran',toastraw:'Çiğ tost',toast:'Tost',burger:'Hamburger',friesraw:'Çiğ patates',fries:'Patates kızartması',potatocut:'Doğranmış patates'};
+const NAMES={bread:'Tost ekmeği',cheese:'Kaşar',sucuk:'Sucuk',patty:'Köfte',bun:'Hamburger ekmeği',potato:'Patates',lettuce:'Marul',tomato:'Domates',tea:'Çay',cola:'Kola',ayran:'Ayran',dough:'Hamur',doughopen:'Açılmış hamur',sandwich:'Sandviç',gozraw:'Çiğ gözleme',gozleme:'Gözleme',toastraw:'Çiğ tost',toast:'Tost',burger:'Hamburger',friesraw:'Çiğ patates',fries:'Patates kızartması',potatocut:'Doğranmış patates'};
 const LV=['çiğ','az pişmiş','normal','fazla pişmiş','yanmış'];
-const COL={bread:0xdcb87a,cheese:0xffd23f,sucuk:0xa8322b,patty:0x6b3b22,bun:0xe3a857,potato:0xd9c07a,potatocut:0xe8d27a,lettuce:0x4caf50,tomato:0xd9342b,tea:0x8b3a1a,cola:0x2b1a14,ayran:0xf4f4ee,toastraw:0xdcb87a,toast:0xdcb87a,burger:0xe3a857,friesraw:0xe8d27a,fries:0xf2c33a};
+const COL={bread:0xdcb87a,cheese:0xffd23f,sucuk:0xa8322b,patty:0x6b3b22,bun:0xe3a857,potato:0xd9c07a,potatocut:0xe8d27a,lettuce:0x4caf50,tomato:0xd9342b,tea:0x8b3a1a,cola:0x2b1a14,ayran:0xf4f4ee,dough:0xf3e9d2,doughopen:0xf3e9d2,sandwich:0xe8c98a,gozraw:0xf3e9d2,gozleme:0xe2b86b,toastraw:0xdcb87a,toast:0xdcb87a,burger:0xe3a857,friesraw:0xe8d27a,fries:0xf2c33a};
 const SH=[1.15,1,.8,.5,.2];
-function colOf(k,lv){let c=new THREE.Color(COL[k]||0x888888);if(k==='patty'&&lv===0)return new THREE.Color(0xd88070);if(['toast','patty','burger','fries'].includes(k))c.multiplyScalar(SH[lv==null?2:lv]);return c;}
+function colOf(k,lv){let c=new THREE.Color(COL[k]||0x888888);if(k==='patty'&&lv===0)return new THREE.Color(0xd88070);if(['toast','patty','burger','fries','gozleme'].includes(k))c.multiplyScalar(SH[lv==null?2:lv]);return c;}
 let ws,me,ST=[],TB=[],PRICE={},S0=null,hold=null,inGame=false,code='';
 const R=new THREE.WebGLRenderer({antialias:false,powerPreference:'high-performance'});R.setPixelRatio(Math.min(devicePixelRatio,1.5));R.setSize(innerWidth,innerHeight);R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFShadowMap;$('c').appendChild(R.domElement);
 const scene=new THREE.Scene();scene.background=new THREE.Color(0xcfe8ff);scene.fog=new THREE.Fog(0xcfe8ff,18,40);
@@ -63,7 +63,7 @@ function onState(s){s.m.forEach(m=>{toast(m.m,m.c);if(m.m.includes('+'))beep(880
  const my=s.pl.find(p=>p.id===me);hold=my&&my.h;
  $('top').innerHTML=`<span>💰 ${s.money}₺</span><span>Gün ${s.day} ${fmt(s.tm)} (${s.pn})</span><span>⭐ İtibar ${s.rep}</span><span>Seviye ${s.lv}</span><span>Sırada: ${s.qn}</span>${s.dl?'<span>🚚 Tedarik yolda</span>':''}`;
  $('ords').innerHTML=s.or.map(o=>`<div class="o"><b>#${o.no} ${o.n}</b> <small>${o.ty} • ${o.pay}</small><br>${o.it.map(k=>{const done=!o.need.includes(k);return`<span style="${o.need.filter(x=>x===k).length?'':'text-decoration:line-through;opacity:.5'}">${NAMES[k]}</span>`}).join(', ')}<div style="height:3px;background:#333;margin-top:3px"><div style="height:3px;width:${Math.min(100,o.w/o.pat*100)}%;background:${o.w>o.pat?'#f55':'#6c6'}"></div></div></div>`).join('');
- $('held').textContent=hold?`✋ ${NAMES[hold.k]||hold.k}${['toast','patty','burger','fries'].includes(hold.k)?' ('+LV[hold.lv]+')':''}`:'✋ Elin boş';
+ $('held').textContent=hold?`✋ ${NAMES[hold.k]||hold.k}${['toast','patty','burger','fries','gozleme'].includes(hold.k)?' ('+LV[hold.lv]+')':''}`:'✋ Elin boş';
  $('inv').innerHTML='<b>STOK</b><br>'+Object.entries(s.stock).map(([k,v])=>`<div style="color:${v<6?'#f77':'#fff'}">${NAMES[k]}: ${v}</div>`).join('');
  if(s.rp){const r=s.rp;$('report').classList.remove('hide');$('report').innerHTML=`<h1>Gün ${r.day} Raporu</h1><div>Müşteri: ${r.cust} • Kaybedilen: ${r.lost}</div><div>Satış: ${r.sales}₺ • Gider: ${r.exp}₺ • Kâr: ${r.profit}₺</div><div>İsraf: ${r.waste} • Memnuniyet: %${r.sat} • Temizlik: ${r.clean}</div><div>Kasa: ${r.money}₺</div><small>Yeni gün birazdan başlıyor...</small>`;}else $('report').classList.add('hide');
  if(Date.now()-lastSave>15000){lastSave=Date.now();try{localStorage.setItem('kt_save',JSON.stringify({money:s.money,day:s.day,rep:s.rep,level:s.lv,stock:s.stock}));}catch(e){}}
@@ -86,7 +86,7 @@ function solid(x,z){for(const s of ST){if(['register','counter','phone'].include
  if(z>-1.9&&z<-1.1&&x<8.2)return true;return x<-9.6||x>9.6||z<-6.8||z>8.6;}
 function promptOf(s){const d=S0.sd[s.id];switch(s.type){
  case'ing':return`[E] ${s.label} al (stok ${S0.stock[s.arg]})`;
- case'board':return hold?'[E] Tahtaya koy':d.p.length?'[E] Hazırla/al   [Sağ tık] Doğra':'Boş tahta';
+ case'board':return hold?'[E] Tahtaya koy':d.p.length?'[E] Hazırla/al   [Sağ tık] Doğra / hamur aç':'Boş tahta';
  case'cook':return d.br?'[E] Tamir et':d.k?'[E] Çıkar'+(d.k?` (${LV[d.lv]})`:''):hold?'[E] Yerleştir':'Boş'+(s.id==='fryer'?` • Yağ %${Math.round(d.oil)} [Sağ tık] değiştir`:'');
  case'tea':return d.st?(d.el>=9?'[E] Çayı al':'Demleniyor...'):'[E] Çay demle';
  case'trash':return'[E] Çöpe at';case'register':return'[E] Sıradaki müşterinin siparişini al';case'counter':return'[E] Ürünü teslim et';

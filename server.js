@@ -1,12 +1,12 @@
 const express=require('express'),http=require('http'),{WebSocketServer}=require('ws');
 const app=express();app.use(express.static(__dirname+'/public'));
 const server=http.createServer(app),wss=new WebSocketServer({server});
-const ING={bread:['Tost ekmeği',3],cheese:['Kaşar',5],sucuk:['Sucuk',6],patty:['Köfte',15],bun:['Hamburger ekmeği',4],potato:['Patates',4],lettuce:['Marul',2],tomato:['Domates',2],tea:['Çay',1],cola:['Kola',8],ayran:['Ayran',6]};
-const PRICE={toast:45,burger:90,fries:40,tea:10,cola:25,ayran:20};
+const ING={bread:['Tost ekmeği',3],cheese:['Kaşar',5],sucuk:['Sucuk',6],patty:['Köfte',15],bun:['Hamburger ekmeği',4],potato:['Patates',4],lettuce:['Marul',2],tomato:['Domates',2],tea:['Çay',1],cola:['Kola',8],ayran:['Ayran',6],dough:['Hamur',5]};
+const PRICE={toast:45,burger:90,fries:40,tea:10,cola:25,ayran:20,sandwich:35,gozleme:55};
 const MENU=Object.keys(PRICE);
 const ST=[];const S=(id,type,x,z,label,arg)=>ST.push({id,type,x,z,label,arg});
 ['bread','cheese','sucuk','patty','bun','potato','lettuce','tomato'].forEach((k,i)=>S('i_'+k,'ing',-8.5+i*2.2,-6.6,ING[k][0],k));
-S('i_cola','ing',9,-5,'Kola dolabı','cola');S('i_ayran','ing',9,-3.5,'Ayran dolabı','ayran');
+S('i_dough','ing',9,-6.6,'Hamur','dough');S('sac','cook',7.5,-5.7,'Gözleme sacı',{accept:'gozraw',out:'gozleme'});S('i_cola','ing',9,-5,'Kola dolabı','cola');S('i_ayran','ing',9,-3.5,'Ayran dolabı','ayran');
 S('b1','board',-7,-4,'Kesme tahtası 1');S('b2','board',-5,-4,'Kesme tahtası 2');
 S('toaster','cook',-2.5,-4,'Tost makinesi',{accept:'toastraw',out:'toast'});
 S('grill','cook',0,-4,'Izgara',{accept:'patty',out:'patty'});
@@ -38,13 +38,15 @@ function act(r,pl,id,alt){const s=ST.find(x=>x.id===id);if(!s||dist(pl,s)>3.2)re
  case'ing':if(h)return say(pl,'Elin dolu!');if(r.stock[s.arg]<=0)return say(pl,s.label+' stoğu bitti! Telefondan tedarik ver.');
   r.stock[s.arg]--;pl.hold={k:s.arg,lv:2,t:now};break;
  case'board':
-  if(alt){const i=d.parts.findIndex(p=>p.k==='potato');if(i<0)return say(pl,'Doğranacak patates yok.');if(++d.cut>=3){d.parts[i]={k:'potatocut',lv:0};d.cut=0;}return;}
+  if(alt){const i=d.parts.findIndex(p=>p.k==='potato'||p.k==='dough');if(i<0)return say(pl,'Doğranacak patates veya açılacak hamur yok.');if(++d.cut>=3){d.parts[i]=d.parts[i].k==='potato'?{k:'potatocut',lv:0}:{k:'doughopen',lv:0};d.cut=0;}return;}
   if(h){if(h.k==='patty'&&h.lv<1)return say(pl,'Köfteyi önce ızgarada pişir!');
-   if(!['bread','cheese','sucuk','bun','potato','lettuce','tomato','patty'].includes(h.k))return say(pl,'Bu tahtaya konmaz.');
+   if(!['bread','cheese','sucuk','bun','potato','lettuce','tomato','patty','dough'].includes(h.k))return say(pl,'Bu tahtaya konmaz.');
    if(d.parts.length>=7)return say(pl,'Tahta dolu.');d.parts.push({k:h.k,lv:h.lv});pl.hold=null;return;}
   if(!d.parts.length)return;const ks=d.parts.map(p=>p.k),has=k=>ks.includes(k);
   if(has('potatocut')){pl.hold={k:'friesraw',lv:0};d.parts=d.parts.filter(p=>p.k!=='potatocut');}
   else if(has('bun')&&has('patty')){const p=d.parts.find(p=>p.k==='patty');pl.hold={k:'burger',lv:p.lv,x:ks.filter(k=>['cheese','lettuce','tomato'].includes(k)).length};d.parts=[];}
+  else if(has('doughopen')&&has('cheese')){pl.hold={k:'gozraw',lv:0};d.parts=[];}
+  else if(has('bread')&&!has('bun')&&(has('tomato')||has('lettuce'))){pl.hold={k:'sandwich',lv:2,x:ks.length-1};d.parts=[];}
   else if(has('bread')&&has('cheese')&&!has('bun')){pl.hold={k:'toastraw',lv:0};d.parts=[];}
   else{d.parts=[];r.st.waste++;say(pl,'Geçersiz tarif! Malzemeler çöpe gitti.');}
   break;
@@ -63,7 +65,7 @@ function act(r,pl,id,alt){const s=ST.find(x=>x.id===id);if(!s||dist(pl,s)>3.2)re
  case'counter':{if(!h)return say(pl,'Elin boş.');if(!PRICE[h.k])return say(pl,'Bu ürün servis edilemez.');
   const c=r.cust.filter(c=>c.st==='wait'&&c.need.includes(h.k)).sort((a,b)=>a.no-b.no)[0];if(!c)return say(pl,'Bu ürünü bekleyen müşteri yok.');
   c.need.splice(c.need.indexOf(h.k),1);
-  if(['toast','burger','fries'].includes(h.k))c.pen+=Math.abs(h.lv-2)*18+(h.lv===0?10:0);
+  if(['toast','burger','fries','gozleme'].includes(h.k))c.pen+=Math.abs(h.lv-2)*18+(h.lv===0?10:0);
   if(h.dirty)c.pen+=15;if(h.k==='tea'&&now-h.t>45)c.pen+=20;
   if(h.x!=null&&h.k==='burger')c.pen-=h.x*2;
   pl.hold=null;if(!c.need.length)finish(r,c,now);break;}

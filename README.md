@@ -12,4 +12,6 @@ Kasa'ya (E) gelen müşterinin siparişini al -> hazırla -> Teslim Tezgâhı'nd
 Tost: ekmek+kaşar (+sucuk) tahtaya koy, E ile al, tost makinesine koy, doğru anda çıkar.
 Burger: köfteyi ızgarada pişir, tahtada bun+köfte(+peynir/marul/domates) birleştir, E ile al.
 Patates: patatesi tahtaya koy, sağ tık x3 doğra, E ile al, fritöze koy, çıkar.
+Sandviç: ekmek + marul/domates (+peynir) tahtada birleştir, pişirmeden servis et.
+Gözleme: hamuru tahtaya koy, sağ tık x3 aç, peynir ekle, E ile al, sac'a koy, çıkar.
 Çay: makineye E, 9 sn demlenince E. Kola/Ayran: dolaptan al.
