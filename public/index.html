@@ -1,46 +1,50 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Kantin 3D - Multiplayer</title>
-  <link rel="stylesheet" href="/css/style.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kantin Tycoon 3D</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/style.css">
 </head>
 <body>
-  <!-- Lobby -->
-  <div id="lobby" class="overlay active">
-    <div class="card">
-      <h1>🏫 Kantin 3D</h1>
-      <p class="sub">Basit Multiplayer 3D Kantin</p>
-      <input type="text" id="playerName" placeholder="İsmin" maxlength="12" />
-      <button id="btnCreate" class="btn primary">Oda Oluştur</button>
-      <div class="or">veya</div>
-      <div class="join">
-        <input type="text" id="roomCode" placeholder="Oda Kodu" maxlength="4" />
-        <button id="btnJoin" class="btn">Katıl</button>
-      </div>
-      <div id="error" class="error"></div>
-      <div id="lobbyInfo" class="lobby-info hidden">
-        <p>Oda Kodu: <strong id="codeDisplay"></strong></p>
-        <ul id="playerList"></ul>
-        <button id="btnStart" class="btn success hidden">Oyunu Başlat</button>
-      </div>
+<div id="game"></div>
+<div id="vignette"></div>
+<div id="hud">
+  <div class="topbar">
+    <div class="brand"><span class="brand-mark">K</span><div><b>KANTİN TYCOON</b><small>OKUL KANTİNİ · GÜN 01</small></div></div>
+    <div class="stats">
+      <div class="stat"><small>KASA</small><b id="money">₺1.250</b></div>
+      <div class="stat"><small>GÜNÜN CİROSU</small><b id="revenue">₺0</b></div>
+      <div class="stat"><small>SABIR</small><b id="rep">100%</b></div>
+      <div class="clock"><span class="dot"></span><b id="clock">08:00</b><small>PAZARTESİ</small></div>
     </div>
   </div>
-
-  <!-- HUD -->
-  <div id="hud" class="hidden">
-    <div id="crosshair">+</div>
-    <div id="info">
-      <div>WASD - Hareket | Mouse - Bakış | E - Etkileşim | ESC - Mouse serbest</div>
-    </div>
-    <div id="playersHud"></div>
-    <div id="toast"></div>
+  <div class="crosshair"><i></i><i></i></div>
+  <div id="hint" class="hint hidden"><kbd>E</kbd><span id="hintText">Etkileşim</span></div>
+  <div class="bottom-left">
+    <div class="objective"><span class="objective-icon">✦</span><div><small>GÜNLÜK HEDEF</small><b id="objective">İlk müşterini karşıla</b></div></div>
+    <div class="controls"><span><kbd>W A S D</kbd> HAREKET</span><span><kbd>SHIFT</kbd> KOŞ</span><span><kbd>E</kbd> ETKİLEŞİM</span><span><kbd>ESC</kbd> DURAKLAT</span></div>
   </div>
-
-  <!-- Canvas will be added by Three.js -->
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/js/game.js"></script>
-</body>
-</html>
+  <div class="right-stack">
+    <div class="task-card"><div class="task-head"><span>İŞLETME DURUMU</span><span class="live">CANLI</span></div><div class="task-row"><span>Bekleyen müşteri</span><b id="queueCount">0</b></div><div class="task-row"><span>Ürün stoğu</span><b id="stockCount">36 adet</b></div><div class="task-row"><span>Memnuniyet</span><b id="satisfaction">92%</b></div><div class="progress"><i id="goalProgress"></i></div><small class="muted" id="goalText">Günlük hedef: ₺500</small></div>
+  </div>
+</div>
+<div id="startScreen" class="screen">
+  <div class="start-card">
+    <div class="eyebrow"><span></span> YENİ BİR İŞLETME HİKÂYESİ</div>
+    <h1>KANTİN<br><em>TYCOON</em><sup>3D</sup></h1>
+    <p>Küçük bir okul kantininden şehrin en sevilen işletmesine. Tezgâhın arkasına geç, müşterilerini tanı ve kendi düzenini kur.</p>
+    <div class="start-features"><span>✦ Birinci şahıs</span><span>✦ İşletme simülasyonu</span><span>✦ Serbest keşif</span></div>
+    <button id="startBtn">KANTİNİ AÇ <span>→</span></button>
+    <small class="start-note">WASD ile hareket · Fare ile bak · E ile etkileşim</small>
+  </div>
+  <div class="start-side"><span>01 / 05</span><b>HER GÜN<br>YENİ BİR<br>BAŞLANGIÇ.</b><small>İŞLETMEYİ SEN YÖNET.</small></div>
+</div>
+<div id="interactionPanel" class="panel hidden">
+  <button class="close" id="closePanel">×</button><div class="panel-kicker">KANTİN İŞLEMLERİ</div><h2 id="panelTitle">Kasa</h2><div id="panelContent"></div>
+</div>
+<div id="toast"></div>
+<div id="pauseScreen" class="screen hidden"><div class="pause-card"><div class="eyebrow">KISA BİR MOLA</div><h2>OYUN DURAKLATILDI</h2><p>Kantin seni bekliyor.</p><button id="resumeBtn">DEVAM ET →</button></div></div>
+<script type="module" src="/game.js"></script>
+</body></html>
