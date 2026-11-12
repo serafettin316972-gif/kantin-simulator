@@ -23,7 +23,7 @@ const pick=a=>a[Math.floor(Math.random()*a.length)],rnd=(a,b)=>a+Math.random()*(
 const rooms={};
 function newRoom(load){let code;do code=Array.from({length:4},()=>'ABCDEFGHJKLMNPRSTUVYZ'[Math.floor(Math.random()*21)]).join('');while(rooms[code]);
  const stock={};for(const k in ING)stock[k]=load&&load.stock&&load.stock[k]!=null?load.stock[k]:20;
- const r={code,players:{},cust:[],money:load?.money??500,day:load?.day??1,tm:0,rep:load?.rep??60,level:load?.level??1,stock,sd:{},deliv:[],msgs:[],no:1,cid:1,pause:0,rp:null,rush:0,evT:60,emptyAt:0,st:{}};
+ const r={code,players:{},cust:[],money:load?.money??500,day:load?.day??1,tm:0,rep:load?.rep??60,level:load?.level??1,stock,sd:{},deliv:[],msgs:[],no:1,cid:1,pause:0,rp:null,rush:0,evT:60,mess:[],mid:1,emptyAt:0,st:{}};
  resetStats(r);
  for(const s of ST){r.sd[s.id]=s.type==='board'?{parts:[],cut:0}:s.type==='cook'?{item:null,t0:0,br:false,fix:0,oil:100}:s.type==='tea'?{st:0,t0:0}:s.type==='table'?{dirty:false,occ:false}:{};}
  rooms[code]=r;return r;}
@@ -33,7 +33,7 @@ const msg=(r,m,c)=>r.msgs.push({m,c:c||'#fff'});
 function say(pl,m){send(pl.ws,{t:'m',m});}
 function send(ws,o){if(ws.readyState===1)ws.send(JSON.stringify(o));}
 function dist(pl,s){return Math.hypot(pl.x-s.x,pl.z-s.z);}
-function act(r,pl,id,alt){const s=ST.find(x=>x.id===id);if(!s||dist(pl,s)>3.2)return;const d=r.sd[id],h=pl.hold,now=Date.now()/1000;
+function act(r,pl,id,alt){if(id.startsWith('m:')){const i=r.mess.findIndex(m=>'m:'+m.id===id);if(i>=0&&Math.hypot(pl.x-r.mess[i].x,pl.z-r.mess[i].z)<2.8)r.mess.splice(i,1);return;}const s=ST.find(x=>x.id===id);if(!s||dist(pl,s)>3.2)return;const d=r.sd[id],h=pl.hold,now=Date.now()/1000;
  switch(s.type){
  case'ing':if(h)return say(pl,'Elin dolu!');if(r.stock[s.arg]<=0)return say(pl,s.label+' stoğu bitti! Telefondan tedarik ver.');
   r.stock[s.arg]--;pl.hold={k:s.arg,lv:2,t:now};break;
@@ -76,7 +76,7 @@ function act(r,pl,id,alt){const s=ST.find(x=>x.id===id);if(!s||dist(pl,s)>3.2)re
  case'upgrade':{const c=600*r.level;if(r.money<c)return say(pl,`Yükseltme ${c}₺`);r.money-=c;r.st.exp+=c;r.level++;msg(r,'İşletme seviyesi '+r.level+'! Daha geniş pişirme aralığı, daha fazla müşteri','#fd6');break;}
  case'table':if(!h&&d.dirty){d.dirty=false;}break;}
 }
-function finish(r,c,now){const wp=Math.min(40,(now-c.t0)/c.pat*40),dirty=Object.values(r.sd).filter(x=>x.dirty).length;
+function finish(r,c,now){const wp=Math.min(40,(now-c.t0)/c.pat*40),dirty=Object.values(r.sd).filter(x=>x.dirty).length+r.mess.length;
  const sat=clamp(Math.round(100-c.pen-wp-dirty*3),0,100);let pay=c.total;if(sat>85)pay=Math.round(pay*1.1);else if(sat<40)pay=Math.round(pay*.6);
  r.money+=pay;r.st.sales+=pay;r.st.cust++;r.st.satSum+=sat;r.st.satN++;r.rep=clamp(r.rep+(sat-60)/20,0,100);
  msg(r,`#${c.no} teslim: +${pay}₺ (${c.pay}) memnuniyet %${sat}`,sat>60?'#9f9':'#fa6');
@@ -94,21 +94,22 @@ function tick(r,dt){const now=Date.now()/1000;
  for(const p of Object.values(r.players)){} 
  for(let i=r.deliv.length-1;i>=0;i--)if(now>=r.deliv[i].at){for(const k in r.deliv[i].add)r.stock[k]+=r.deliv[i].add[k];r.deliv.splice(i,1);msg(r,'Tedarik teslim edildi!','#9f9');}
  if(r.pause>0){r.pause-=dt;if(r.pause<=0){r.rp=null;r.day++;r.tm=0;resetStats(r);}}
- else{r.tm+=dt;if(r.tm>=DAY){const s=r.st;r.rp={day:r.day,cust:s.cust,sales:s.sales,exp:s.exp,profit:s.sales-s.exp,waste:s.waste,lost:s.lost,sat:s.satN?Math.round(s.satSum/s.satN):0,clean:100-Object.values(r.sd).filter(x=>x.dirty).length*15,money:r.money};r.pause=12;r.cust.forEach(c=>{if(c.st!=='eat'&&c.st!=='toTable')c.st='leave';});}
+ else{r.tm+=dt;if(r.tm>=DAY){const s=r.st;r.rp={day:r.day,cust:s.cust,sales:s.sales,exp:s.exp,profit:s.sales-s.exp,waste:s.waste,lost:s.lost,sat:s.satN?Math.round(s.satSum/s.satN):0,clean:clamp(100-Object.values(r.sd).filter(x=>x.dirty).length*15-r.mess.length*6,0,100),money:r.money};r.pause=12;r.cust.forEach(c=>{if(c.st!=='eat'&&c.st!=='toTable')c.st='leave';});}
   else{const pr=PER.find(p=>r.tm>=p[0]&&r.tm<p[1])||PER[0];let rate=pr[2]*(.5+r.rep/100)*(.9+.1*r.level);if(r.rush>0){rate*=3;r.rush-=dt;}
    if(r.cust.filter(c=>c.st==='queue').length<6&&Object.keys(r.players).length&&Math.random()<rate*dt)spawn(r);
    if((r.evT-=dt)<=0){r.evT=rnd(60,100);const e=Math.floor(Math.random()*4);
     if(e===0){const m=pick(['toaster','grill','fryer']);r.sd[m].br=true;msg(r,ST.find(s=>s.id===m).label+' ARIZALANDI! Tamir et (E x5)','#f66');}
     else if(e===1){r.rush=20;msg(r,'Beklenmedik müşteri yoğunluğu!','#fc6');}
     else if(e===2){r.delay=15;msg(r,'Tedarik firması gecikme bildirdi (+15 sn)','#fc6');}
-    else{const dn=Object.values(r.sd).filter(x=>x.dirty).length;if(dn>2){r.money=Math.max(0,r.money-100);r.st.exp+=100;msg(r,'TEMİZLİK DENETİMİ: kirli masalar yüzünden -100₺ ceza!','#f66');}else msg(r,'Temizlik denetimi geçildi, itibar arttı!','#9f9');}}}}
+    else{const dn=Object.values(r.sd).filter(x=>x.dirty).length+r.mess.length;if(dn>2){r.money=Math.max(0,r.money-100);r.st.exp+=100;msg(r,'TEMİZLİK DENETİMİ: kirli masalar yüzünden -100₺ ceza!','#f66');}else msg(r,'Temizlik denetimi geçildi, itibar arttı!','#9f9');}}}}
+ r.rep=clamp(r.rep-r.mess.length*.01*dt*(r.pause>0?0:1),0,100);
  const q=r.cust.filter(c=>c.st==='queue').sort((a,b)=>a.id-b.id);q.forEach((c,i)=>{c.tz=.4+i*.9;});
  const ws=r.cust.filter(c=>c.st==='wait').sort((a,b)=>a.no-b.no);ws.forEach((c,i)=>{c.tx=-.5+(i%8)*1.3;c.tz=.5+Math.floor(i/8)*.9;});
  for(const c of r.cust.slice()){
   if(c.st==='queue'){walk(c,c.tx,c.tz,dt,r.cust);if(now-c.qt>c.pat+25){c.st='leave';r.st.lost++;r.rep=clamp(r.rep-1.5,0,100);}}
   else if(c.st==='wait'){walk(c,c.tx,c.tz,dt,r.cust);if(now-c.t0>c.pat*1.5){c.st='leave';r.st.lost++;r.rep=clamp(r.rep-3,0,100);msg(r,`#${c.no} sabrı tükenip gitti!`,'#f66');}}
   else if(c.st==='toTable'){const t=TB[c.seat];if(walk(c,t[0],t[1]-1,dt,r.cust)){c.st='eat';c.et=now+12;}}
-  else if(c.st==='eat'){if(now>c.et){r.sd['t'+c.seat].occ=false;r.sd['t'+c.seat].dirty=true;c.st='leave';}}
+  else if(c.st==='eat'){if(now>c.et){r.sd['t'+c.seat].occ=false;r.sd['t'+c.seat].dirty=true;if(r.mess.length<12)r.mess.push({id:r.mid++,x:TB[c.seat][0]+rnd(-1.2,1.2),z:TB[c.seat][1]+rnd(-.2,1.6)});c.st='leave';}}
   else if(c.st==='leave'){if(walk(c,-3,10,dt,r.cust)||c.z>9.8)r.cust.splice(r.cust.indexOf(c),1);}}
 }
 function stateOf(r){const now=Date.now()/1000,sd={};
@@ -119,7 +120,7 @@ function stateOf(r){const now=Date.now()/1000,sd={};
  return{t:'s',pl:Object.values(r.players).map(p=>({id:p.id,n:p.name,x:p.x,z:p.z,ry:p.ry,h:p.hold})),
   cu:r.cust.map(c=>({id:c.id,x:+c.x.toFixed(2),z:+c.z.toFixed(2),st:c.st,l:c.look,s:c.seed})),
   or:r.cust.filter(c=>c.st==='wait').sort((a,b)=>a.no-b.no).map(c=>({no:c.no,n:c.name,ty:c.type,it:c.items,need:c.need,pay:c.pay,w:Math.round(now-c.t0),pat:c.pat})),
-  qn:r.cust.filter(c=>c.st==='queue').length,money:Math.round(r.money),day:r.day,tm:Math.round(r.tm),pn:pr[3],rep:Math.round(r.rep),lv:r.level,stock:r.stock,sd,rp:r.rp,m:r.msgs.splice(0),dl:r.deliv.length,code:r.code};}
+  qn:r.cust.filter(c=>c.st==='queue').length,money:Math.round(r.money),day:r.day,tm:Math.round(r.tm),pn:pr[3],rep:Math.round(r.rep),lv:r.level,stock:r.stock,sd,rp:r.rp,m:r.msgs.splice(0),dl:r.deliv.length,ms:r.mess.map(m=>[m.id,m.x,m.z]),code:r.code};}
 wss.on('connection',ws=>{let room=null,pl=null;
  ws.on('message',raw=>{let m;try{m=JSON.parse(raw);}catch{return;}
   if(m.t==='create'||m.t==='join'){if(room)return;let r=m.t==='create'?newRoom(m.load):rooms[String(m.code||'').toUpperCase()];

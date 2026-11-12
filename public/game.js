@@ -14,7 +14,7 @@ addEventListener('resize',()=>{R.setSize(innerWidth,innerHeight);cam.aspect=inne
 const mat=c=>new THREE.MeshStandardMaterial({color:c,roughness:.8});
 function box(w,h,d,c,x,y,z,p){const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),mat(c));m.position.set(x,y,z);m.castShadow=m.receiveShadow=true;(p||scene).add(m);return m;}
 function label(t){const c=document.createElement('canvas');c.width=256;c.height=48;const g=c.getContext('2d');g.fillStyle='rgba(0,0,0,.6)';g.fillRect(0,0,256,48);g.fillStyle='#fff';g.font='bold 24px sans-serif';g.textAlign='center';g.fillText(t,128,32);const s=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c)}));s.scale.set(1.6,.3,1);return s;}
-const SM={},CU={},PL={};let ground;
+const SM={},CU={},PL={},MSH={};let ground;
 const TOPH={ing:1.2,board:1,cook:1.05,tea:1.2,trash:.9,register:1.1,counter:1.1,phone:1.1,upgrade:1.1,table:.95};
 const TCOL={board:0xe8d9b0,cook:0x777b80,tea:0xb0b6bd,trash:0x333333,register:0x2a6fdb,counter:0x6bd36b,phone:0x9a5,upgrade:0xb455d4};
 function build(){
@@ -73,6 +73,8 @@ function onState(s){s.m.forEach(m=>{toast(m.m,m.c);if(m.m.includes('+'))beep(880
   else if(st.type==='cook'){setItems(v.grp,d.k?[[d.k==='toast'||d.k==='toastraw'?'toast':d.k,d.lv]]:[],d.k+':'+d.lv);v.m.material.color.set(d.br?0x992222:0x777b80);}
   else if(st.type==='tea'){v.m.material.color.set(d.st?(d.el>=9?0x66cc66:0xcc9933):0xb0b6bd);}
   else if(st.type==='table')v.top.material.color.set(d.dirty?0x5a3a1a:0xa6713a);}
+ // floor mess
+ const MS_=S0.ms||[],mseen={};for(const m of MS_){mseen[m[0]]=1;if(!MSH[m[0]]){const b=box(.7,.02,.5,0x4a3520,m[1],.02,m[2]);b.rotation.y=m[0];MSH[m[0]]=b;}}for(const id in MSH)if(!mseen[id]){scene.remove(MSH[id]);delete MSH[id];}
  // customers
  const seen={};for(const c of s.cu){seen[c.id]=1;let o=CU[c.id];if(!o){o={g:person(c.l),tx:c.x,tz:c.z,c};o.g.position.set(c.x,0,c.z);scene.add(o.g);CU[c.id]=o;}o.tx=c.x;o.tz=c.z;o.c=c;}
  for(const id in CU)if(!seen[id]){scene.remove(CU[id].g);delete CU[id];}
@@ -84,7 +86,7 @@ function onState(s){s.m.forEach(m=>{toast(m.m,m.c);if(m.m.includes('+'))beep(880
 let hm=null,hk='';function updateHeld(){const k=hold?hold.k+hold.lv:'';if(k===hk)return;hk=k;if(hm)cam.remove(hm);hm=null;if(hold){hm=itemMesh(hold.k,hold.lv,2);hm.position.set(.35,-.3,-.7);cam.add(hm);}}
 function solid(x,z){for(const s of ST){if(['register','counter','phone'].includes(s.type))continue;const r=s.type==='table'?.9:s.type==='cook'?1:.8;if(Math.abs(x-s.x)<r&&Math.abs(z-(s.type==='table'?TB[s.arg][1]:s.z))<(s.type==='table'?.9:.6))return true;}
  if(z>-1.9&&z<-1.1&&x<8.2)return true;return x<-9.6||x>9.6||z<-6.8||z>8.6;}
-function promptOf(s){const d=S0.sd[s.id];switch(s.type){
+function promptOf(s){if(s.type==='mess')return'[E] Yerdeki kiri temizle (paspas)';const d=S0.sd[s.id];switch(s.type){
  case'ing':return`[E] ${s.label} al (stok ${S0.stock[s.arg]})`;
  case'board':return hold?'[E] Tahtaya koy':d.p.length?'[E] Hazırla/al   [Sağ tık] Doğra / hamur aç':'Boş tahta';
  case'cook':return d.br?'[E] Tamir et':d.k?'[E] Çıkar'+(d.k?` (${LV[d.lv]})`:''):hold?'[E] Yerleştir':'Boş'+(s.id==='fryer'?` • Yağ %${Math.round(d.oil)} [Sağ tık] değiştir`:'');
@@ -99,6 +101,7 @@ function loop(){requestAnimationFrame(loop);const now=performance.now(),dt=Math.
   if(now-lastSend>66&&ws.readyState===1){lastSend=now;ws.send(JSON.stringify({t:'mv',x:px,z:pz,ry:yaw}));}
   let best=null,bd=2.6;const fx=-Math.sin(yaw),fz=-Math.cos(yaw);
   for(const s of ST){const sz=s.type==='table'?TB[s.arg][1]:(['register','counter','phone'].includes(s.type)?s.z:s.z),dx=s.x-px,dz=sz-pz,d=Math.hypot(dx,dz);if(d<bd&&(d<1.3||(dx*fx+dz*fz)/d>.45)){bd=d;best=s;}}
+  if(S0.ms)for(const m of S0.ms){const d=Math.hypot(m[1]-px,m[2]-pz);if(d<bd&&d<1.8){bd=d;best={id:'m:'+m[0],type:'mess',x:m[1],z:m[2]};}}
   if(target&&SM[target.id]&&SM[target.id].m)SM[target.id].m.material.emissive&&SM[target.id].m.material.emissive.set(0);
   target=best;if(best){const v=SM[best.id];if(v&&v.m)v.m.material.emissive.set(0x333300);$('prompt').textContent=promptOf(best);$('prompt').classList.remove('hide');}else $('prompt').classList.add('hide');
   const k=Math.min(1,dt*8);
